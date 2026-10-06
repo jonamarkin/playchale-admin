@@ -1,0 +1,31 @@
+{
+  "name": "playchale-admin",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.33.0",
+  "scripts": {
+    "dev": "nuxt dev --port 3200",
+    "build": "nuxt generate",
+    "preview": "npx serve .output/public -l 3200",
+    "postinstall": "nuxt prepare",
+    "typecheck": "nuxt typecheck",
+    "test:e2e": "playwright test --config tests/playwright.config.ts",
+    "deploy": "pnpm build && pnpm dlx wrangler pages deploy .output/public --project-name playchale-admin"
+  },
+  "dependencies": {
+    "@nuxt/fonts": "^0.11.4",
+    "@nuxt/icon": "^2.0.0",
+    "nuxt": "^4.1.0",
+    "vue": "^3.5.0",
+    "vue-router": "^5.3.1"
+  },
+  "devDependencies": {
+    "@iconify-json/ph": "^1.2.2",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "^4.1.0",
+    "@types/node": "^26.6.2",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.9.0",
+    "vue-tsc": "^3.3.11"
+  }
+}

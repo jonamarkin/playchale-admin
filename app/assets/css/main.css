@@ -1,0 +1,136 @@
+@import 'tailwindcss';
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
+@theme {
+  --font-sans: 'Onest', ui-sans-serif, system-ui, sans-serif;
+
+  /* Surfaces — cool, fresh off-whites */
+  --color-canvas: #f3f6f4;
+  --color-surface: #ffffff;
+  --color-subtle: #eaf0ed;
+  --color-skeleton: #d0d9d5;
+  --color-hairline: #e0e7e3;
+
+  /* Brand — deep teal and mint */
+  --color-brand: #0c3a3a;
+  --color-brand-deep: #0f4848;
+  --color-accent: #7cf0c8;
+  --color-accent-hover: #62e2b6;
+  --color-night: #061c1c;
+
+  /* Text */
+  --color-ink: #0b1716;
+  --color-body: #2a3635;
+  --color-mute: #64716f;
+
+  --shadow-card: 0 1px 2px rgb(16 17 12 / 0.03), 0 12px 32px -8px rgb(16 17 12 / 0.06);
+  --shadow-float: 0 2px 4px rgb(16 17 12 / 0.03), 0 28px 56px -16px rgb(16 17 12 / 0.14);
+  --shadow-pill: 0 1px 2px rgb(16 17 12 / 0.05), 0 0 0 1px rgb(16 17 12 / 0.04);
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-feature-settings: 'ss01' off;
+  }
+
+  ::selection {
+    background: var(--color-accent);
+    color: var(--color-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+
+  button {
+    cursor: pointer;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Typography scale (design is drawn at 1440px)                        */
+/* ------------------------------------------------------------------ */
+@utility text-hero {
+  font-size: clamp(2.25rem, 1.1rem + 4.2vw, 4rem);
+  line-height: 1.28;
+  letter-spacing: -0.0135em;
+  font-weight: 600;
+}
+
+@utility text-h2 {
+  font-size: clamp(2.125rem, 1.2rem + 2.9vw, 3.25rem);
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+@utility text-h3 {
+  font-size: clamp(1.75rem, 1.2rem + 1.6vw, 2.5rem);
+  line-height: 1.2;
+  font-weight: 600;
+}
+
+@utility text-lead {
+  font-size: clamp(1.0625rem, 0.95rem + 0.4vw, 1.25rem);
+  line-height: 1.5;
+}
+
+/* ------------------------------------------------------------------ */
+/* Scroll reveal (driven by the v-reveal directive)                    */
+/* ------------------------------------------------------------------ */
+[data-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 28px, 0);
+  transition:
+    opacity 0.9s var(--ease-out-expo),
+    transform 0.9s var(--ease-out-expo);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-reveal='scale'] {
+  transform: translate3d(0, 20px, 0) scale(0.94);
+}
+
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Without JS nothing should stay hidden. */
+@media (scripting: none) {
+  [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+}
