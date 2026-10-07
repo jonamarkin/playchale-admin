@@ -64,7 +64,7 @@ API: `docker compose up -d api`.
 ### 3. Deploy
 
 ```bash
-NUXT_PUBLIC_API_BASE=https://api.playchale.com pnpm deploy
+NUXT_PUBLIC_API_BASE=https://api.playchale.com pnpm pages:deploy
 ```
 
 That builds the static site and publishes it to the Cloudflare Pages project `playchale-admin`

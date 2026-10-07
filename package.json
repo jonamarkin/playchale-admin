@@ -10,7 +10,7 @@
     "postinstall": "nuxt prepare",
     "typecheck": "nuxt typecheck",
     "test:e2e": "playwright test --config tests/playwright.config.ts",
-    "deploy": "pnpm build && pnpm dlx wrangler pages deploy .output/public --project-name playchale-admin"
+    "pages:deploy": "pnpm build && pnpm dlx wrangler pages deploy .output/public --project-name playchale-admin"
   },
   "dependencies": {
     "@nuxt/fonts": "^0.11.4",
