@@ -48,7 +48,8 @@ const verify = async () => {
   try {
     await api.auth.signIn(to.value, code.value.trim())
     await reload()
-    const redirect = typeof route.query.redirect === 'string' && route.query.redirect.startsWith('/') ? route.query.redirect : '/'
+    // Only a path on this site: "//evil.com" and "/\evil.com" would leave it.
+    const redirect = typeof route.query.redirect === 'string' && /^\/(?![/\\])/.test(route.query.redirect) ? route.query.redirect : '/'
     await navigateTo(redirect)
   }
   catch (e) {
