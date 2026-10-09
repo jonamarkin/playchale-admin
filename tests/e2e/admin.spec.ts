@@ -48,6 +48,8 @@ test.describe('The desk', () => {
 
   test('choosing someone far down the list brings their history into view', async ({ page }) => {
     await signIn(page, '024 000 0002')
+    // Signed in once the overview is up: going straight on raced the session cookie.
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
     await page.goto('/people')
     const last = page.getByRole('list', { name: 'People found' }).getByRole('button').last()
     await last.click()
