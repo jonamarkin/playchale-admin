@@ -49,6 +49,14 @@ export interface AdminMessage {
 }
 
 /** How the app is doing over a window. */
+/** The SMS bundle that sign-in codes by phone draw on. `credits` is null when the provider couldn't be asked. */
+export interface AdminSms {
+  configured: boolean
+  credits: number | null
+  lowAt: number
+  low: boolean
+}
+
 export interface AdminHealth {
   signups: number
   gamesCreated: number

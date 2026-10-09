@@ -1,5 +1,5 @@
 import type { FetchError } from 'ofetch'
-import type { AdminEntry, AdminHealth, AdminMessage, AdminPerson, ID, SignedIn, StaffRole } from '~/types/admin'
+import type { AdminEntry, AdminHealth, AdminMessage, AdminPerson, AdminSms, ID, SignedIn, StaffRole } from '~/types/admin'
 
 /**
  * The PlayChale API, as the admin desk uses it. The session is the API's own cookie, sent with
@@ -31,6 +31,7 @@ export function useAdminApi() {
       removeMessage: (messageId: ID, why?: string) =>
         call<void>(`/admin/messages/${messageId}`, { method: 'DELETE', body: why ? { why } : undefined }),
       health: (days?: number) => call<AdminHealth>('/admin/health', { query: days ? { days } : undefined }),
+      sms: () => call<AdminSms>('/admin/sms'),
     },
   }
 }

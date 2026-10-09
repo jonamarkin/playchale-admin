@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminHealth } from '~/types/admin'
+import type { AdminHealth, AdminSms } from '~/types/admin'
 
 /**
  * How the app is doing. Counts, not charts: with few players a chart is a line along the floor, and
@@ -34,6 +34,9 @@ const tiles = computed(() => health.value
     ]
   : [])
 
+/** The SMS bundle: asked of the provider, so it's loaded on its own and never holds the page up. */
+const { data: sms } = await useAsyncData<AdminSms | null>('admin:sms', () => api.admin.sms(), { default: () => null, lazy: true })
+
 /** Of the games made in the window, the share that were called off: the number to watch. */
 const calledOffShare = computed(() => {
   const h = health.value
@@ -67,5 +70,23 @@ const calledOffShare = computed(() => {
         {{ calledOffShare }}% of games made in this period were called off.
       </p>
     </template>
+
+    <section v-if="sms" class="mt-8" aria-labelledby="sms-heading">
+      <h2 id="sms-heading" class="text-[18px] font-semibold">SMS</h2>
+      <div class="mt-3 rounded-[16px] p-4 shadow-pill" :class="sms.low ? 'bg-[#fef3f2]' : 'bg-surface'">
+        <template v-if="!sms.configured">
+          <p class="text-[15px] text-body">Texts aren’t set up, so nobody can sign in with a phone number. People sign in by email.</p>
+        </template>
+        <template v-else-if="sms.credits === null">
+          <p class="text-[15px] text-body">Couldn’t ask the SMS provider for the balance just now.</p>
+        </template>
+        <template v-else>
+          <p class="flex items-center gap-1.5 text-[13px] text-mute"><Icon name="ph:chat-text" class="size-4" /> SMS credits left</p>
+          <p class="mt-2 text-[28px] leading-8 font-semibold tabular-nums" :class="sms.low ? 'text-[#912018]' : ''">{{ sms.credits.toLocaleString('en-GB') }}</p>
+          <p v-if="sms.low" class="mt-2 text-[14px] text-[#912018]">Running low: top the bundle up before sign-in codes stop going out.</p>
+          <p v-else class="mt-2 text-[13px] text-mute">Each sign-in code by text uses one. You’ll be warned below {{ sms.lowAt.toLocaleString('en-GB') }}.</p>
+        </template>
+      </div>
+    </section>
   </div>
 </template>
