@@ -22,6 +22,8 @@ test.describe('Who gets in', () => {
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
     await expect(page.getByText('New players')).toBeVisible()
+    // A laptop has no SMS provider, so the desk says texts aren't set up rather than showing a balance.
+    await expect(page.getByRole('region', { name: 'SMS' }).getByText(/Texts aren’t set up/)).toBeVisible()
     expect(errors).toEqual([])
   })
 })
