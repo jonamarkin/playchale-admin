@@ -1,5 +1,5 @@
 import type { FetchError } from 'ofetch'
-import type { AdminEntry, AdminEvent, AdminEventDetail, AdminFunnel, AdminGame, AdminHealth, AdminMessage, AdminPerson, AdminSms, AdminTrends, AdminVisits, ID, SignedIn, StaffRole } from '~/types/admin'
+import type { AdminEntry, AdminEvent, AdminEventDetail, AdminFunnel, AdminGame, AdminHealth, AdminMessage, AdminPerson, AdminSms, AdminTrends, AdminVenue, AdminVisits, ID, SignedIn, StaffRole } from '~/types/admin'
 
 /**
  * The PlayChale API, as the admin desk uses it. The session is the API's own cookie, sent with
@@ -41,6 +41,13 @@ export function useAdminApi() {
       event: (eventId: ID) => call<AdminEventDetail>(`/admin/events/${eventId}`),
       games: (when: 'new' | 'upcoming' | 'played' | 'cancelled', query?: string) =>
         call<AdminGame[]>('/admin/games', { query: { when, ...(query ? { query } : {}) } }),
+      venues: (when: 'waiting' | 'live' | 'declined', query?: string) =>
+        call<AdminVenue[]>('/admin/venues', { query: { when, ...(query ? { query } : {}) } }),
+      venuesWaiting: () => call<{ waiting: number }>('/admin/venues/waiting'),
+      /** Live for players; its owner is told. */
+      approveVenue: (venueId: ID) => call<void>(`/admin/venues/${venueId}/approve`, { method: 'POST' }),
+      /** Hidden from players until its owner changes what the note asks; they're told. */
+      declineVenue: (venueId: ID, why: string) => call<void>(`/admin/venues/${venueId}/decline`, { method: 'POST', body: { why } }),
       /** Calls a game off on PlayChale's behalf; its host and players are told why. */
       takeDownGame: (gameId: ID, why: string) => call<void>(`/admin/games/${gameId}/take-down`, { method: 'POST', body: { why } }),
     },

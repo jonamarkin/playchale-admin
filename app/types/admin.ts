@@ -202,3 +202,30 @@ export interface AdminGame {
   /** A competition's game: only the competition changes it. */
   fixture: boolean
 }
+
+/** A venue as staff check it: where it is, how to reach it, what it charges, who listed it. */
+export interface AdminVenue {
+  id: ID
+  name: string
+  area: string
+  country: string
+  currency: string
+  address?: string
+  mapUrl?: string
+  latitude?: number
+  longitude?: number
+  /** The venue's own number, shown to players who book. */
+  phone?: string
+  description?: string
+  amenities: string[]
+  ownerId: ID
+  ownerName?: string
+  ownerGuest: boolean
+  /** Waiting for staff, live, or declined with a note for the owner. */
+  review: 'pending' | 'approved' | 'declined'
+  reviewNote?: string
+  reviewedAt?: ISODate
+  createdAt: ISODate
+  bookings: number
+  pitches: { name: string, sport: string, format: string, pricePerHour: number }[]
+}

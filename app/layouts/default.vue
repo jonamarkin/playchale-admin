@@ -5,11 +5,23 @@
  */
 const { user, role, signOut } = useStaffSession()
 const route = useRoute()
+const api = useAdminApi()
+
+/**
+ * Venues waiting for staff: shown on their tab, so a new one is seen without going looking. Asked
+ * again on every page, which keeps it current (and recovers if the first ask raced signing in).
+ */
+const waiting = useState<number | null>('admin:venues-waiting', () => null)
+watch([role, () => route.path], ([staff]) => {
+  if (staff) api.admin.venuesWaiting().then(r => (waiting.value = r.waiting)).catch(() => undefined)
+}, { immediate: true })
+
 const tabs = [
   { to: '/', label: 'Overview', icon: 'ph:chart-bar' },
   { to: '/people', label: 'People', icon: 'ph:users' },
   { to: '/events', label: 'Events', icon: 'ph:trophy' },
   { to: '/games', label: 'Games', icon: 'ph:soccer-ball' },
+  { to: '/venues', label: 'Venues', icon: 'ph:storefront' },
   { to: '/messages', label: 'Messages', icon: 'ph:chat-circle-text' },
 ]
 const current = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))
@@ -35,6 +47,7 @@ const showChrome = computed(() => !!role.value && route.path !== '/sign-in')
             :class="current(tab.to) ? 'bg-brand text-white' : 'text-body hover:bg-subtle hover:text-ink'"
           >
             <Icon :name="tab.icon" class="size-4" /> {{ tab.label }}
+            <span v-if="tab.to === '/venues' && waiting" class="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-ink tabular-nums" :aria-label="`${waiting} waiting`">{{ waiting }}</span>
           </NuxtLink>
         </nav>
         <div class="ml-auto flex min-w-0 items-center gap-3">
@@ -53,6 +66,7 @@ const showChrome = computed(() => !!role.value && route.path !== '/sign-in')
           :class="current(tab.to) ? 'bg-brand text-white' : 'bg-surface text-ink shadow-pill'"
         >
           <Icon :name="tab.icon" class="size-4" /> {{ tab.label }}
+          <span v-if="tab.to === '/venues' && waiting" class="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-ink tabular-nums" :aria-label="`${waiting} waiting`">{{ waiting }}</span>
         </NuxtLink>
       </nav>
     </header>

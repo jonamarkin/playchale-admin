@@ -147,10 +147,52 @@ test.describe('The desk', () => {
     await host.dispose()
   })
 
+  test('a new venue waits on the desk until staff approve it, or send it back with a note', async ({ page, playwright }) => {
+    const owner = await playwright.request.newContext()
+    await asPlayer(owner, ABENA)
+    const hours = Array.from({ length: 7 }, () => ({ open: '06:00', close: '23:00' }))
+    const list = (name: string) => owner.post(`${API}/venues`, {
+      data: { name, area: 'Dansoman, Accra', address: 'Opposite the Dansoman roundabout', phone: '024 555 0101', hours, amenities: ['floodlights'],
+        pitches: [{ name: 'Pitch A', sport: 'football', format: '5-a-side', surface: 'turf', pricePerHour: 30000 }] },
+    })
+    expect((await list('Dansoman Astro')).ok(), 'Abena lists a venue').toBeTruthy()
+    expect((await list('Free Jerseys Arena')).ok()).toBeTruthy()
+
+    await signIn(page, '024 000 0002')
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+    const tab = page.getByRole('navigation', { name: 'Admin' }).filter({ visible: true }).getByRole('link', { name: /Venues/ })
+    await expect(tab).toContainText('2')
+    await tab.click()
+
+    const venues = page.getByRole('list', { name: 'Venues' })
+    const astro = venues.getByRole('listitem').filter({ hasText: 'Dansoman Astro' })
+    await expect(astro.getByText('Opposite the Dansoman roundabout')).toBeVisible()
+    await expect(astro.getByText(/Pitch A · football 5-a-side/)).toBeVisible()
+    await astro.getByRole('button', { name: 'Approve' }).click()
+    await expect(astro).toBeHidden()
+
+    const fake = venues.getByRole('listitem').filter({ hasText: 'Free Jerseys Arena' })
+    await fake.getByRole('button', { name: 'Needs a change' }).click()
+    await fake.getByRole('button', { name: 'Send it back' }).click()
+    await expect(fake.getByText('Say what to change')).toBeVisible()
+    await fake.getByLabel(/What to change/).fill('We couldn’t find it on the map. Add its address.')
+    await fake.getByRole('button', { name: 'Send it back' }).click()
+    await expect(page.getByRole('heading', { name: 'Nothing waiting' })).toBeVisible()
+    await expect(tab).not.toContainText('2')
+
+    // Live for players now; the other is still hidden. Abena heard about both.
+    const found = await (await owner.get(`${API}/venues?query=dansoman`)).json() as { name: string }[]
+    expect(found.map(v => v.name)).toEqual(['Dansoman Astro'])
+    const told = JSON.stringify(await (await owner.get(`${API}/notifications`)).json())
+    expect(told).toContain('Dansoman Astro is live')
+    expect(told).toContain('Free Jerseys Arena needs a change')
+    await owner.dispose()
+  })
+
   test('nothing scrolls sideways at phone width', async ({ page }) => {
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-    for (const path of ['/', '/people', '/messages', '/events', `/events/${seeded('ev-hillview')}`, '/games']) {
+    for (const path of ['/', '/people', '/messages', '/events', `/events/${seeded('ev-hillview')}`, '/games', '/venues']) {
       await page.goto(path)
       await page.waitForTimeout(500)
       const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
