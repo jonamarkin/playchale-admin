@@ -59,10 +59,32 @@ export interface AdminSms {
 
 export interface AdminHealth {
   signups: number
+  /** Of the signups, those who finished setting up their profile. */
+  onboarded: number
   gamesCreated: number
   gamesPlayed: number
   gamesCalledOff: number
   joins: number
   messages: number
   activePeople: number
+  bookings: number
+  eventsCreated: number
+  /** People put in events, by an organiser, a rep or the link. */
+  eventPeople: number
+  /** Matches and heats with their result put in. */
+  eventResults: number
+}
+
+/**
+ * The player app's pages and films, counted without knowing who (the API's usage_counts). A page
+ * is its route ("/games/:id"). `arrivals` are visits: the first page of each, the only one that
+ * says where it came from.
+ */
+export interface AdminVisits {
+  opens: number
+  arrivals: number
+  days: { day: string, opens: number }[]
+  pages: { name: string, opens: number, arrivals: number }[]
+  sources: { name: string, n: number }[]
+  films: { name: string, started: number, finished: number }[]
 }

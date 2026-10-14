@@ -3,7 +3,12 @@
 The admin desk: a separate app from the one players use, for the few people who work on PlayChale.
 None of its code or routes exist in the player app.
 
-- **Overview** — new and active players, games created, played and called off, joins, messages
+- **Overview** — new and active players, games created, played and called off, joins, messages,
+  pitch bookings; events made, people added to them and their results; and visits to the player
+  app: which pages were opened, where visits came from, and whether the films were watched to the
+  end. Visits are counted without knowing who (no cookies, no addresses): tag a link you send with
+  `?from=` (`playchale.com/games-day?from=hillview`) to see it here by name, and open
+  `playchale.com/?count=off` once in each of your own browsers to leave your visits out
 - **People** — find someone by name, handle, email or phone (typed `024…` or `+233…`), see what
   happened to them, and export everything held about them for a data request
 - **Messages** — talk from games, newest first, and a way to take one down with a reason
