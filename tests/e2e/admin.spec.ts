@@ -189,10 +189,52 @@ test.describe('The desk', () => {
     await owner.dispose()
   })
 
+  test('reports about one thing are one decision, and the reporters are thanked', async ({ page, playwright }) => {
+    // Tema morning run: free, so it can be called off (refunds aren't in the app).
+    const game = seeded('g-tema-tomorrow')
+    const abena = await playwright.request.newContext()
+    await asPlayer(abena, ABENA)
+    expect((await abena.post(`${API}/reports`, { data: { subjectType: 'game', subjectId: game, reason: 'spam', note: 'Selling phones in the chat' } })).ok()).toBeTruthy()
+    const kwame = await playwright.request.newContext()
+    await asPlayer(kwame, '+233240000001')
+    expect((await kwame.post(`${API}/reports`, { data: { subjectType: 'game', subjectId: game, reason: 'unsafe' } })).ok()).toBeTruthy()
+    expect((await kwame.post(`${API}/reports`, { data: { subjectType: 'user', subjectId: seeded('u-kofi'), reason: 'abuse' } })).ok()).toBeTruthy()
+
+    await signIn(page, '024 000 0002')
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+    const tab = page.getByRole('navigation', { name: 'Admin' }).filter({ visible: true }).getByRole('link', { name: /Reports/ })
+    await expect(tab).toContainText('2')
+    await tab.click()
+
+    const list = page.getByRole('list', { name: 'Reported' })
+    const saturday = list.getByRole('listitem').filter({ hasText: '2 reports' }).first()
+    await expect(saturday.getByText('Selling phones in the chat')).toBeVisible()
+    await saturday.getByRole('button', { name: 'Call the game off' }).click()
+    await saturday.getByRole('button', { name: 'Call the game off' }).click()
+    await expect(saturday.getByText('Say why')).toBeVisible()
+    await saturday.getByLabel(/Why it’s coming down/).fill('Selling phones, not a game.')
+    await saturday.getByRole('button', { name: 'Call the game off' }).click()
+    await expect(list.getByText('Selling phones in the chat')).toBeHidden()
+
+    const person = list.getByRole('listitem').filter({ hasText: 'Abusive or harassing' }).first()
+    await person.getByRole('button', { name: 'Leave it' }).click()
+    await person.getByRole('button', { name: 'Leave it' }).click()
+    await expect(page.getByRole('heading', { name: 'Nothing to decide' })).toBeVisible()
+
+    await page.getByRole('radio', { name: 'Decided' }).click()
+    await expect(list.getByText('Dealt with')).toBeVisible()
+    await expect(list.getByText('Left as it is')).toBeVisible()
+
+    for (const reporter of [abena, kwame]) {
+      expect(JSON.stringify(await (await reporter.get(`${API}/notifications`)).json())).toContain('Thanks for your report')
+      await reporter.dispose()
+    }
+  })
+
   test('nothing scrolls sideways at phone width', async ({ page }) => {
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-    for (const path of ['/', '/people', '/messages', '/events', `/events/${seeded('ev-hillview')}`, '/games', '/venues']) {
+    for (const path of ['/', '/people', '/messages', '/events', `/events/${seeded('ev-hillview')}`, '/games', '/venues', '/reports']) {
       await page.goto(path)
       await page.waitForTimeout(500)
       const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)

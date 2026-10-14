@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { AdminWaiting } from '~/types/admin'
+
 /**
  * The desk's frame: who you are, the places, and a way out. Utilitarian on purpose — this is
  * a tool for a handful of people, not a product, so it spends no space on anything but the work.
@@ -8,13 +10,15 @@ const route = useRoute()
 const api = useAdminApi()
 
 /**
- * Venues waiting for staff: shown on their tab, so a new one is seen without going looking. Asked
- * again on every page, which keeps it current (and recovers if the first ask raced signing in).
+ * What's waiting for staff (venues to check, reported things): counted on their tabs, so it's seen
+ * without going looking. Asked again on every page, which keeps it current (and recovers if the
+ * first ask raced signing in).
  */
-const waiting = useState<number | null>('admin:venues-waiting', () => null)
+const waiting = useState<AdminWaiting | null>('admin:waiting', () => null)
 watch([role, () => route.path], ([staff]) => {
-  if (staff) api.admin.venuesWaiting().then(r => (waiting.value = r.waiting)).catch(() => undefined)
+  if (staff) api.admin.waiting().then(r => (waiting.value = r)).catch(() => undefined)
 }, { immediate: true })
+const countFor = (to: string) => (to === '/venues' ? waiting.value?.venues : to === '/reports' ? waiting.value?.reports : 0) ?? 0
 
 const tabs = [
   { to: '/', label: 'Overview', icon: 'ph:chart-bar' },
@@ -22,6 +26,7 @@ const tabs = [
   { to: '/events', label: 'Events', icon: 'ph:trophy' },
   { to: '/games', label: 'Games', icon: 'ph:soccer-ball' },
   { to: '/venues', label: 'Venues', icon: 'ph:storefront' },
+  { to: '/reports', label: 'Reports', icon: 'ph:flag' },
   { to: '/messages', label: 'Messages', icon: 'ph:chat-circle-text' },
 ]
 const current = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))
@@ -47,11 +52,11 @@ const showChrome = computed(() => !!role.value && route.path !== '/sign-in')
             :class="current(tab.to) ? 'bg-brand text-white' : 'text-body hover:bg-subtle hover:text-ink'"
           >
             <Icon :name="tab.icon" class="size-4" /> {{ tab.label }}
-            <span v-if="tab.to === '/venues' && waiting" class="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-ink tabular-nums" :aria-label="`${waiting} waiting`">{{ waiting }}</span>
+            <span v-if="countFor(tab.to)" class="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-ink tabular-nums">{{ countFor(tab.to) }}</span>
           </NuxtLink>
         </nav>
         <div class="ml-auto flex min-w-0 items-center gap-3">
-          <span class="hidden truncate text-[13px] text-mute md:block">{{ user?.name || user?.email }} · {{ role }}</span>
+          <span class="hidden truncate text-[13px] text-mute xl:block">{{ user?.name || user?.email }} · {{ role }}</span>
           <BaseButton variant="secondary" size="sm" @click="signOut">Sign out</BaseButton>
         </div>
       </div>
@@ -66,7 +71,7 @@ const showChrome = computed(() => !!role.value && route.path !== '/sign-in')
           :class="current(tab.to) ? 'bg-brand text-white' : 'bg-surface text-ink shadow-pill'"
         >
           <Icon :name="tab.icon" class="size-4" /> {{ tab.label }}
-          <span v-if="tab.to === '/venues' && waiting" class="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-ink tabular-nums" :aria-label="`${waiting} waiting`">{{ waiting }}</span>
+          <span v-if="countFor(tab.to)" class="grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1.5 text-[11px] font-semibold text-ink tabular-nums">{{ countFor(tab.to) }}</span>
         </NuxtLink>
       </nav>
     </header>

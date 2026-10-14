@@ -1,5 +1,5 @@
 import type { FetchError } from 'ofetch'
-import type { AdminEntry, AdminEvent, AdminEventDetail, AdminFunnel, AdminGame, AdminHealth, AdminMessage, AdminPerson, AdminSms, AdminTrends, AdminVenue, AdminVisits, ID, SignedIn, StaffRole } from '~/types/admin'
+import type { AdminEntry, AdminEvent, AdminEventDetail, AdminFunnel, AdminGame, AdminHealth, AdminMessage, AdminPerson, AdminReported, AdminSms, AdminTrends, AdminVenue, AdminVisits, AdminWaiting, ID, SignedIn, StaffRole } from '~/types/admin'
 
 /**
  * The PlayChale API, as the admin desk uses it. The session is the API's own cookie, sent with
@@ -43,7 +43,16 @@ export function useAdminApi() {
         call<AdminGame[]>('/admin/games', { query: { when, ...(query ? { query } : {}) } }),
       venues: (when: 'waiting' | 'live' | 'declined', query?: string) =>
         call<AdminVenue[]>('/admin/venues', { query: { when, ...(query ? { query } : {}) } }),
-      venuesWaiting: () => call<{ waiting: number }>('/admin/venues/waiting'),
+      /** Venues to check and reported things to decide on, for the desk's tabs. */
+      waiting: () => call<AdminWaiting>('/admin/waiting'),
+      /** Reported things waiting for a decision, the most reported first; or the latest decisions. */
+      reports: (decided = false) => call<AdminReported[]>('/admin/reports', { query: decided ? { decided: true } : undefined }),
+      /** The game, message or venue comes down with the reason (for a person, the reason is what was done); its reports close. */
+      takeDownReported: (type: AdminReported['subjectType'], id: ID, why: string) =>
+        call<void>(`/admin/reports/${type}/${id}/take-down`, { method: 'POST', body: { why } }),
+      /** Nothing wrong with it: its reports close and it stays. */
+      dismissReports: (type: AdminReported['subjectType'], id: ID, why?: string) =>
+        call<void>(`/admin/reports/${type}/${id}/dismiss`, { method: 'POST', body: why ? { why } : {} }),
       /** Live for players; its owner is told. */
       approveVenue: (venueId: ID) => call<void>(`/admin/venues/${venueId}/approve`, { method: 'POST' }),
       /** Hidden from players until its owner changes what the note asks; they're told. */

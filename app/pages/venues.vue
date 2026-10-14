@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AdminVenue } from '~/types/admin'
+import type { AdminVenue, AdminWaiting } from '~/types/admin'
 import type { ChipOption } from '~/types/ui'
 
 /**
@@ -35,8 +35,8 @@ const { data: venues, status, error, refresh } = await useAsyncData<AdminVenue[]
   () => api.admin.venues(when.value, searched.value || undefined),
   { default: () => [], lazy: true, watch: [when, searched] },
 )
-/** The count on the Venues tab, refreshed after each decision. */
-const waitingCount = useState<number | null>('admin:venues-waiting')
+/** The counts on the desk's tabs, refreshed after each decision. */
+const waitingCounts = useState<AdminWaiting | null>('admin:waiting')
 
 const money = (minor: number, currency: string) =>
   new Intl.NumberFormat('en-GH', { style: 'currency', currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100)
@@ -50,7 +50,7 @@ const amenityNames: Record<string, string> = {
 const busy = ref<string | null>(null)
 const afterDecision = (id: string) => {
   venues.value = venues.value.filter(v => v.id !== id)
-  api.admin.venuesWaiting().then(r => (waitingCount.value = r.waiting)).catch(() => undefined)
+  api.admin.waiting().then(r => (waitingCounts.value = r)).catch(() => undefined)
 }
 
 const approve = async (v: AdminVenue) => {

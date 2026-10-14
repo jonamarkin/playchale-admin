@@ -24,6 +24,10 @@ None of its code or routes exist in the player app.
   Waiting ones come first (their count is on the tab), with where it is (and a map link), its
   number, pitches and prices; approve it, or send it back with what to change. The owner is told
   either way, and changing it sends it back here. A live venue can be taken off the same way
+- **Reports** — what players reported from the app (a game, something said in one, a person, a
+  venue), every report about one thing as one decision, the most reported first. Call the game off,
+  remove the message or take the venue off, with a reason; or leave it. Whoever reported hears it
+  was looked at, never what was decided. Decisions from the last 90 days are under **Decided**
 - **People** — find someone by name, handle, email or phone (typed `024…` or `+233…`), see what
   happened to them, and export everything held about them for a data request
 - **Messages** — talk from games, newest first, and a way to take one down with a reason
@@ -31,8 +35,14 @@ None of its code or routes exist in the player app.
 It reads and acts through the PlayChale API's `/admin` endpoints. **The API is the real gate**:
 every call is refused (as "not found") unless the signed-in person is in `platform_staff`. This app
 only spares non-staff a screen of errors. Every search, every look at someone's history or an
-event's organisers, every export, every removal or take-down and every venue decision is written
-to the API's event stream with the staff member's name on it.
+event's organisers, every export, every removal or take-down and every venue or report decision is
+written to the API's event stream with the staff member's name on it.
+
+**Staff are emailed** when something new is waiting (a venue to check, a report): at most one email
+every ten minutes, only when something came in since the last, to each staff member's sign-in email
+(or contact email). The link in it goes to `PLAYCHALE_ADMIN_URL` on the API (default
+`https://admin.playchale.com`). Without an email provider set up on the API, nobody is emailed; the
+counts on the Venues and Reports tabs still show what's waiting.
 
 Nuxt 4, Tailwind 4, the same design tokens and base components as the player app (copied, not
 shared — the two apps share the API and nothing else). A static single-page app: no server.

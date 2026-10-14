@@ -229,3 +229,38 @@ export interface AdminVenue {
   bookings: number
   pitches: { name: string, sport: string, format: string, pricePerHour: number }[]
 }
+
+/** What's waiting for staff, for the desk's tabs. */
+export interface AdminWaiting {
+  venues: number
+  /** Reported things (not reports): several reports about one game are one decision. */
+  reports: number
+}
+
+/** Something players reported, with every report about it: one decision answers them all. */
+export interface AdminReported {
+  subjectType: 'game' | 'message' | 'user' | 'venue'
+  subjectId: ID
+  /** A game's title, what was said, a person's name, a venue's name; missing when it's gone already. */
+  title?: string
+  /** Who and where: the host, who said it and in which game, a handle, an area. */
+  detail?: string
+  /** For a message, the game it was said in. */
+  gameId?: ID
+  /** A game's or venue's status now ("cancelled", "declined"), or "closed" for a closed account. */
+  state?: string
+  reports: AdminReportLine[]
+  /** Decided ones only. */
+  outcome?: 'actioned' | 'dismissed'
+  outcomeNote?: string
+  decidedBy?: string
+  decidedAt?: ISODate
+}
+
+export interface AdminReportLine {
+  reason: 'spam' | 'abuse' | 'unsafe' | 'wrong' | 'other'
+  note?: string
+  reporterId: ID
+  reporterName?: string
+  at: ISODate
+}
