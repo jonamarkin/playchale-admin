@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /**
- * The desk's frame: who you are, the three places, and a way out. Utilitarian on purpose — this is
+ * The desk's frame: who you are, the places, and a way out. Utilitarian on purpose — this is
  * a tool for a handful of people, not a product, so it spends no space on anything but the work.
  */
 const { user, role, signOut } = useStaffSession()
@@ -8,6 +8,8 @@ const route = useRoute()
 const tabs = [
   { to: '/', label: 'Overview', icon: 'ph:chart-bar' },
   { to: '/people', label: 'People', icon: 'ph:users' },
+  { to: '/events', label: 'Events', icon: 'ph:trophy' },
+  { to: '/games', label: 'Games', icon: 'ph:soccer-ball' },
   { to: '/messages', label: 'Messages', icon: 'ph:chat-circle-text' },
 ]
 const current = (to: string) => (to === '/' ? route.path === '/' : route.path.startsWith(to))

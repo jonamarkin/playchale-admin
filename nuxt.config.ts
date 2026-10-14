@@ -17,7 +17,8 @@ export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   vite: { plugins: [tailwindcss()] },
 
-  runtimeConfig: { public: { apiBase: 'http://localhost:8080' } },
+  // appBase: the player app, for "Open in PlayChale" links (NUXT_PUBLIC_APP_BASE when it's live).
+  runtimeConfig: { public: { apiBase: 'http://localhost:8080', appBase: 'http://localhost:3000' } },
 
   app: {
     head: {

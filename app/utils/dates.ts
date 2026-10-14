@@ -13,3 +13,19 @@ export function formatRelative(iso: ISODate, now = new Date()): string {
   if (hours < 48) return 'yesterday'
   return day.format(new Date(iso))
 }
+
+/** Games are on Ghana's clock (the markets PlayChale runs in today all are). */
+const when = new Intl.DateTimeFormat('en-GH', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Accra' })
+const date = new Intl.DateTimeFormat('en-GH', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+/** "Sat 26 Sep, 6:00 pm": when a game is. */
+export function formatWhen(iso: ISODate): string {
+  return when.format(new Date(iso))
+}
+
+/** "Sat 26 Sep 2026", or "Sat 26 – Sun 27 Sep 2026" for an event over days. Days are plain dates, "2026-09-26". */
+export function formatDays(startsOn: string, endsOn: string): string {
+  const start = new Date(`${startsOn}T00:00:00Z`)
+  if (startsOn === endsOn) return date.format(start)
+  return date.formatRange(start, new Date(`${endsOn}T00:00:00Z`))
+}

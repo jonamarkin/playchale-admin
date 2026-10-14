@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import type { AdminHealth, AdminSms, AdminVisits } from '~/types/admin'
+import type { AdminBucket, AdminFunnel, AdminHealth, AdminSms, AdminTrends, AdminVisits } from '~/types/admin'
+import type { BarPoint, ChipOption, FunnelStep } from '~/types/ui'
 
 /**
- * How the app is doing. Counts, not charts: with few players a chart is a line along the floor, and
- * the honest thing to show is the number.
+ * How the app is doing: the numbers for a period, how they went over it (one chart, the measure
+ * picked above it), and the way from a visit to doing something, with and without an account.
  */
 useHead({ title: 'Overview · PlayChale Admin' })
 
@@ -88,6 +89,66 @@ const dayLabel = (day: string) => new Intl.DateTimeFormat('en-GB', { weekday: 's
   .format(new Date(`${day}T00:00:00Z`))
 const share = (part: number, whole: number) => (whole > 0 ? `${Math.round((part / whole) * 100)}%` : '')
 
+/* ---- Over time: one chart, the measure picked above it ---- */
+type Measure = 'signups' | 'activePeople' | 'gamesCreated' | 'gamesPlayed' | 'eventPeople' | 'visits'
+const measures: ChipOption<Measure>[] = [
+  { value: 'signups', label: 'New players' },
+  { value: 'activePeople', label: 'Active players' },
+  { value: 'gamesCreated', label: 'Games made' },
+  { value: 'gamesPlayed', label: 'Games played' },
+  { value: 'eventPeople', label: 'People in events' },
+  { value: 'visits', label: 'Visits' },
+]
+const measure = ref<Measure>('signups')
+const { data: trends } = await useAsyncData<AdminTrends | null>(
+  'admin:trends',
+  () => api.admin.trends(Number(days.value)),
+  { default: () => null, lazy: true, watch: [days] },
+)
+const short = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+const long = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' })
+const monthOnly = new Intl.DateTimeFormat('en-GB', { month: 'short', timeZone: 'UTC' })
+const monthYear = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })
+const points = computed<BarPoint[]>(() => {
+  const t = trends.value
+  if (!t) return []
+  return t.buckets.map((b: AdminBucket) => {
+    const day = new Date(`${b.start}T00:00:00Z`)
+    const label = t.unit === 'month' ? monthOnly.format(day) : short.format(day)
+    const title = t.unit === 'month' ? monthYear.format(day) : t.unit === 'week' ? `Week of ${short.format(day)}` : long.format(day)
+    return { label, title, value: b[measure.value] }
+  })
+})
+const measureLabel = computed(() => measures.find(m => m.value === measure.value)!.label)
+const per = computed(() => trends.value?.unit ?? 'day')
+
+/* ---- From a visit to doing something ---- */
+const { data: funnel } = await useAsyncData<AdminFunnel | null>(
+  'admin:funnel',
+  () => api.admin.funnel(Number(days.value)),
+  { default: () => null, lazy: true, watch: [days] },
+)
+const steps = computed<FunnelStep[]>(() => {
+  const f = funnel.value
+  if (!f) return []
+  return [
+    { label: 'Visits', value: f.visits, note: 'Counted without knowing who' },
+    { label: 'Opened a form', value: f.openedForm, note: 'A game, event, venue, team or league' },
+    { label: 'New accounts', value: f.signups },
+    { label: 'Did something', value: f.didSomething, note: 'Hosted, joined, or ran something' },
+  ]
+})
+/** Without an account: how many, and how many signed up after. */
+const guestRows = computed(() => {
+  const g = funnel.value?.guests
+  if (!g) return []
+  return [
+    { label: 'Hosted a game without an account', icon: 'ph:key', started: g.hostsStarted, kept: g.hostsKept },
+    { label: 'Joined a games day without an account', icon: 'ph:users-three', started: g.eventGuests, kept: g.eventGuestsKept },
+    { label: 'Took a spot in a game without an account', icon: 'ph:sign-in', started: g.gameGuests, kept: g.gameGuestsKept },
+  ]
+})
+
 /** The SMS bundle: asked of the provider, so it's loaded on its own and never holds the page up. */
 const { data: sms } = await useAsyncData<AdminSms | null>('admin:sms', () => api.admin.sms(), { default: () => null, lazy: true })
 
@@ -134,6 +195,36 @@ const calledOffShare = computed(() => {
         </ul>
       </section>
     </template>
+
+    <section v-if="trends" class="mt-8" aria-labelledby="trends-heading">
+      <h2 id="trends-heading" class="text-[18px] font-semibold">Over time</h2>
+      <div class="mt-3 rounded-[16px] bg-surface p-4 shadow-pill">
+        <BaseChipGroup v-model="measure" :options="measures" label="What to chart" size="sm" />
+        <ChartBars class="mt-4" :points="points" :label="`${measureLabel} per ${per}`" />
+        <p class="mt-1 text-[13px] text-mute">{{ measureLabel }} per {{ per }}. Point at a bar, or tab to it, for its number.</p>
+      </div>
+    </section>
+
+    <section v-if="funnel" class="mt-8" aria-labelledby="funnel-heading">
+      <h2 id="funnel-heading" class="text-[18px] font-semibold">From a visit to doing something</h2>
+      <p class="mt-1 max-w-[720px] text-[14px] leading-5 text-body">
+        Visits and forms are counted without knowing who, so these are counts side by side, not the same people followed through.
+      </p>
+      <div class="mt-3 rounded-[16px] bg-surface p-4 shadow-pill">
+        <ChartFunnel :steps="steps" />
+      </div>
+
+      <h3 class="mt-6 text-[15px] font-semibold">Without an account</h3>
+      <ul class="mt-2 grid gap-3 lg:grid-cols-3">
+        <li v-for="row in guestRows" :key="row.label" class="rounded-[16px] bg-surface p-4 shadow-pill">
+          <p class="flex items-center gap-1.5 text-[13px] text-mute"><Icon :name="row.icon" class="size-4" /> {{ row.label }}</p>
+          <p class="mt-2 text-[28px] leading-8 font-semibold tabular-nums">{{ row.started.toLocaleString('en-GB') }}</p>
+          <p class="mt-1 text-[13px] text-body">
+            {{ row.kept.toLocaleString('en-GB') }} signed up after<template v-if="row.started"> · {{ share(row.kept, row.started) }}</template>
+          </p>
+        </li>
+      </ul>
+    </section>
 
     <section v-if="visits" class="mt-8" aria-labelledby="visits-heading">
       <h2 id="visits-heading" class="text-[18px] font-semibold">Visits</h2>

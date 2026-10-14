@@ -21,7 +21,7 @@ test.describe('Who gets in', () => {
     const errors = watchForErrors(page)
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-    await expect(page.getByText('New players')).toBeVisible()
+    await expect(page.getByRole('listitem').filter({ hasText: 'New players' }).first()).toBeVisible()
     // A laptop has no SMS provider, so the desk says texts aren't set up rather than showing a balance.
     await expect(page.getByRole('region', { name: 'SMS' }).getByText(/Texts aren’t set up/)).toBeVisible()
     expect(errors).toEqual([])
@@ -87,9 +87,70 @@ test.describe('The desk', () => {
     await expect(page.getByText('cheap jerseys')).toBeHidden()
   })
 
+  test('the overview charts the period, and the way from a visit to doing something', async ({ page }) => {
+    const errors = watchForErrors(page)
+    await signIn(page, '024 000 0002')
+    const trends = page.getByRole('region', { name: 'Over time' })
+    await expect(trends.getByRole('img', { name: /^New players per day/ })).toBeVisible()
+    await trends.getByRole('radio', { name: 'Games made' }).click()
+    await expect(trends.getByRole('img', { name: /^Games made per day/ })).toBeVisible()
+    await page.getByRole('radiogroup', { name: 'Period' }).getByRole('radio', { name: 'Year' }).click()
+    await expect(trends.getByRole('img', { name: /^Games made per month/ })).toBeVisible()
+
+    const funnel = page.getByRole('region', { name: 'From a visit to doing something' })
+    await expect(funnel.getByText('New accounts')).toBeVisible()
+    await expect(funnel.getByText('Hosted a game without an account')).toBeVisible()
+    expect(errors).toEqual([])
+  })
+
+  test('a games day on today shows its results so far, and who to call', async ({ page }) => {
+    await signIn(page, '024 000 0002')
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+    await page.getByRole('link', { name: 'Events' }).first().click()
+    const hillview = page.getByRole('list', { name: 'Events' }).getByRole('link', { name: /Hillview Games Day/ })
+    await expect(hillview).toContainText('On today')
+    await hillview.click()
+    await expect(page.getByRole('heading', { level: 1, name: 'Hillview Games Day' })).toBeVisible()
+    const running = page.getByRole('region', { name: 'Who’s running it' })
+    await expect(running.getByText('Owner')).toBeVisible()
+    await expect(running.getByRole('link', { name: /^\+233/ }).first()).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Games' }).getByRole('row', { name: /Draughts/ })).toBeVisible()
+  })
+
+  test('a fake game is taken down with a reason, and its host is told why', async ({ page, playwright }) => {
+    const host = await playwright.request.newContext()
+    await asPlayer(host, ABENA)
+    const made = await host.post(`${API}/games`, {
+      data: {
+        sport: 'football', format: '5-a-side', title: 'Free iPhones here', startsAt: new Date(Date.now() + 86_400_000).toISOString(),
+        durationMinutes: 60, venue: { kind: 'unlisted', name: 'Legon Park', area: 'Legon' }, capacity: 10, totalCost: 0, visibility: 'public',
+      },
+    })
+    expect(made.ok(), 'Abena makes a game').toBeTruthy()
+
+    await signIn(page, '024 000 0002')
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+    await page.getByRole('link', { name: 'Games' }).first().click()
+    const fake = page.getByRole('list', { name: 'Games' }).getByRole('listitem').filter({ hasText: 'Free iPhones here' })
+    await fake.getByRole('button', { name: 'Take down' }).click()
+    // A reason first: it's what the host and players read.
+    await fake.getByRole('button', { name: 'Take it down' }).click()
+    await expect(fake.getByText('Say why')).toBeVisible()
+    await fake.getByLabel(/Why it’s coming down/).fill('Not a real game: it advertises phones')
+    await fake.getByRole('button', { name: 'Take it down' }).click()
+    await expect(fake.getByText('Called off')).toBeVisible()
+    await expect(fake.getByRole('button', { name: 'Take down' })).toHaveCount(0)
+
+    const told = JSON.stringify(await (await host.get(`${API}/notifications`)).json())
+    expect(told).toContain('Free iPhones here was taken down')
+    expect(told).toContain('it advertises phones')
+    await host.dispose()
+  })
+
   test('nothing scrolls sideways at phone width', async ({ page }) => {
     await signIn(page, '024 000 0002')
-    for (const path of ['/', '/people', '/messages']) {
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+    for (const path of ['/', '/people', '/messages', '/events', `/events/${seeded('ev-hillview')}`, '/games']) {
       await page.goto(path)
       await page.waitForTimeout(500)
       const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)

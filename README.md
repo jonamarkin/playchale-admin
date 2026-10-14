@@ -9,14 +9,26 @@ None of its code or routes exist in the player app.
   end. Visits are counted without knowing who (no cookies, no addresses): tag a link you send with
   `?from=` (`playchale.com/games-day?from=hillview`) to see it here by name, and open
   `playchale.com/?count=off` once in each of your own browsers to leave your visits out
+- **Over time and the funnel** (on the Overview) — one chart of the period, by day, week or month,
+  with the measure picked above it (new players, active players, games made and played, people in
+  events, visits); and the way from a visit to a form, a new account and doing something, beside
+  how many used PlayChale without an account (hosted a game, joined a games day, took a spot) and
+  how many of them signed up after
+- **Events** — games days and corporate games coming up (on today first), been, or called off, with
+  how far their results have got; open one for each game's progress and who runs it, with their
+  number and email to call on the day (looking at those is recorded with your name)
+- **Games** — every game, newest made first, found by title, place or host, with guest hosts marked;
+  take down a fake or spam one with a reason, which calls it off, stops it repeating and tells its
+  host and players why
 - **People** — find someone by name, handle, email or phone (typed `024…` or `+233…`), see what
   happened to them, and export everything held about them for a data request
 - **Messages** — talk from games, newest first, and a way to take one down with a reason
 
 It reads and acts through the PlayChale API's `/admin` endpoints. **The API is the real gate**:
 every call is refused (as "not found") unless the signed-in person is in `platform_staff`. This app
-only spares non-staff a screen of errors. Every search, every look at someone's history, every
-export and every removal is written to the API's event stream with the staff member's name on it.
+only spares non-staff a screen of errors. Every search, every look at someone's history or an
+event's organisers, every export and every removal or take-down is written to the API's event
+stream with the staff member's name on it.
 
 Nuxt 4, Tailwind 4, the same design tokens and base components as the player app (copied, not
 shared — the two apps share the API and nothing else). A static single-page app: no server.
@@ -69,8 +81,11 @@ API: `docker compose up -d api`.
 ### 3. Deploy
 
 ```bash
-NUXT_PUBLIC_API_BASE=https://api.playchale.com pnpm pages:deploy
+NUXT_PUBLIC_API_BASE=https://api.playchale.com NUXT_PUBLIC_APP_BASE=https://playchale.com pnpm pages:deploy
 ```
+
+`NUXT_PUBLIC_APP_BASE` is the player app, for the desk's links to a game or an event's public page
+(it's `http://localhost:3000` on a laptop).
 
 That builds the static site and publishes it to the Cloudflare Pages project `playchale-admin`
 (created on first deploy). Then in Cloudflare → Pages → `playchale-admin` → **Custom domains**, add

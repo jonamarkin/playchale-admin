@@ -9,6 +9,7 @@ import type { AdminMessage } from '~/types/admin'
 useHead({ title: 'Messages · PlayChale Admin' })
 
 const api = useAdminApi()
+const { appBase } = useRuntimeConfig().public
 const notify = useNotify()
 
 const { data: messages, status, error, refresh } = await useAsyncData<AdminMessage[]>(
@@ -63,7 +64,7 @@ const confirmRemove = async () => {
             <p class="flex flex-wrap items-baseline gap-x-2 text-[13px] text-mute">
               <span class="font-medium text-ink">{{ m.saidByName }}</span>
               <span>in</span>
-              <a :href="`https://playchale.com/games/${m.gameId}`" target="_blank" rel="noopener" class="truncate text-brand hover:underline">{{ m.gameTitle }}</a>
+              <a :href="`${appBase}/games/${m.gameId}`" target="_blank" rel="noopener" class="truncate text-brand hover:underline">{{ m.gameTitle }}</a>
               <span>· {{ formatRelative(m.at) }}</span>
             </p>
             <p class="mt-1 text-[15px] leading-6 break-words whitespace-pre-wrap">{{ m.body }}</p>

@@ -112,6 +112,7 @@ const exportPerson = async () => {
                 <span class="flex items-center gap-2">
                   <span class="truncate text-[15px] font-medium">{{ person.name || 'No name yet' }}</span>
                   <BasePill v-if="person.staff" tone="accent">Staff</BasePill>
+                  <BasePill v-if="person.guestHost" tone="warning" icon="ph:key">Guest host</BasePill>
                   <BasePill v-if="person.deletedAt">Closed</BasePill>
                 </span>
                 <span class="block truncate text-[13px] text-mute">
