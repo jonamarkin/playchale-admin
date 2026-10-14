@@ -46,6 +46,19 @@ test.describe('The desk', () => {
     expect((await download).suggestedFilename()).toMatch(/^playchale-.+\.json$/)
   })
 
+  test('the overview counts events, and visits without knowing who', async ({ page, playwright }) => {
+    // Someone opens the games-day page from a link tagged for Hillview, as the player app tells the API.
+    const visitor = await playwright.request.newContext({ extraHTTPHeaders: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) Chrome/130.0 Mobile Safari/537.36' } })
+    expect((await visitor.post(`${API}/usage`, { data: { kind: 'page', name: '/games-day', source: 'hillview' } })).status()).toBe(204)
+    await visitor.dispose()
+
+    await signIn(page, '024 000 0002')
+    await expect(page.getByRole('region', { name: 'Events' }).getByText('Events made')).toBeVisible()
+    const visits = page.getByRole('region', { name: 'Visits' })
+    await expect(visits.getByText('Games days (churches, schools)')).toBeVisible()
+    await expect(visits.getByText('hillview', { exact: true })).toBeVisible()
+  })
+
   test('choosing someone far down the list brings their history into view', async ({ page }) => {
     await signIn(page, '024 000 0002')
     // Signed in once the overview is up: going straight on raced the session cookie.
