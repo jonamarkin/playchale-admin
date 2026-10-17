@@ -41,8 +41,10 @@ written to the API's event stream with the staff member's name on it.
 **Staff are emailed** when something new is waiting (a venue to check, a report): at most one email
 every ten minutes, only when something came in since the last, to each staff member's sign-in email
 (or contact email). The link in it goes to `PLAYCHALE_ADMIN_URL` on the API (default
-`https://admin.playchale.com`). Without an email provider set up on the API, nobody is emailed; the
-counts on the Venues and Reports tabs still show what's waiting.
+`https://admin.playchale.com`). `PLAYCHALE_ADMIN_ALERTS=false` on the API stops these emails without
+touching any other email; they don't depend on `PLAYCHALE_EMAIL_BULK`, which is only for players'
+emails. Without an email provider set up on the API, nobody is emailed; the counts on the Venues and
+Reports tabs still show what's waiting either way.
 
 Nuxt 4, Tailwind 4, the same design tokens and base components as the player app (copied, not
 shared — the two apps share the API and nothing else). A static single-page app: no server.
