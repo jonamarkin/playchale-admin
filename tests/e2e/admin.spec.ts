@@ -1,4 +1,4 @@
-import { ABENA, API, asPlayer, expect, seeded, signIn, test, watchForErrors } from './helpers'
+import { ABENA, API, asPlayer, expect, goTo, openNav, seeded, signIn, test, watchForErrors } from './helpers'
 
 test.describe('Who gets in', () => {
   test('signed out, the only page is sign-in', async ({ page }) => {
@@ -31,7 +31,7 @@ test.describe('Who gets in', () => {
 test.describe('The desk', () => {
   test('find someone the way a Ghanaian writes their number, and see what happened to them', async ({ page }) => {
     await signIn(page, '024 000 0002')
-    await page.getByRole('link', { name: 'People' }).first().click()
+    await goTo(page, 'People')
     await page.getByPlaceholder(/Name, handle, phone/).fill('024 000 0003')
     const found = page.getByRole('list', { name: 'People found' }).getByRole('button')
     await expect(found).toHaveCount(1)
@@ -78,7 +78,7 @@ test.describe('The desk', () => {
     await player.dispose()
 
     await signIn(page, '024 000 0002')
-    await page.getByRole('link', { name: 'Messages' }).first().click()
+    await goTo(page, 'Messages')
     const message = page.getByRole('list', { name: 'Messages' }).getByRole('listitem').filter({ hasText: 'cheap jerseys' })
     await expect(message).toBeVisible()
     await message.getByRole('button', { name: /Take down/ }).click()
@@ -106,7 +106,7 @@ test.describe('The desk', () => {
   test('a games day on today shows its results so far, and who to call', async ({ page }) => {
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-    await page.getByRole('link', { name: 'Events' }).first().click()
+    await goTo(page, 'Events')
     const hillview = page.getByRole('list', { name: 'Events' }).getByRole('link', { name: /Hillview Games Day/ })
     await expect(hillview).toContainText('On today')
     await hillview.click()
@@ -130,7 +130,7 @@ test.describe('The desk', () => {
 
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-    await page.getByRole('link', { name: 'Games' }).first().click()
+    await goTo(page, 'Games')
     const fake = page.getByRole('list', { name: 'Games' }).getByRole('listitem').filter({ hasText: 'Free iPhones here' })
     await fake.getByRole('button', { name: 'Take down' }).click()
     // A reason first: it's what the host and players read.
@@ -160,7 +160,7 @@ test.describe('The desk', () => {
 
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-    const tab = page.getByRole('navigation', { name: 'Admin' }).filter({ visible: true }).getByRole('link', { name: /Venues/ })
+    const tab = (await openNav(page)).getByRole('link', { name: /Venues/ })
     await expect(tab).toContainText('2')
     await tab.click()
 
@@ -178,7 +178,7 @@ test.describe('The desk', () => {
     await fake.getByLabel(/What to change/).fill('We couldn’t find it on the map. Add its address.')
     await fake.getByRole('button', { name: 'Send it back' }).click()
     await expect(page.getByRole('heading', { name: 'Nothing waiting' })).toBeVisible()
-    await expect(tab).not.toContainText('2')
+    await expect((await openNav(page)).getByRole('link', { name: /Venues/ })).not.toContainText('2')
 
     // Live for players now; the other is still hidden. Abena heard about both.
     const found = await (await owner.get(`${API}/venues?query=dansoman`)).json() as { name: string }[]
@@ -202,7 +202,7 @@ test.describe('The desk', () => {
 
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-    const tab = page.getByRole('navigation', { name: 'Admin' }).filter({ visible: true }).getByRole('link', { name: /Reports/ })
+    const tab = (await openNav(page)).getByRole('link', { name: /Reports/ })
     await expect(tab).toContainText('2')
     await tab.click()
 
@@ -234,7 +234,7 @@ test.describe('The desk', () => {
   test('nothing scrolls sideways at phone width', async ({ page }) => {
     await signIn(page, '024 000 0002')
     await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-    for (const path of ['/', '/people', '/messages', '/events', `/events/${seeded('ev-hillview')}`, '/games', '/venues', '/reports']) {
+    for (const path of ['/', '/people', '/messages', '/events', `/events/${seeded('ev-hillview')}`, '/games', '/venues', '/reports', '/share']) {
       await page.goto(path)
       await page.waitForTimeout(500)
       const over = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
@@ -246,6 +246,56 @@ test.describe('The desk', () => {
 test('signing out ends the session', async ({ page }) => {
   await signIn(page, '024 000 0002')
   await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
-  await page.getByRole('button', { name: 'Sign out' }).click()
+  await openNav(page)
+  await page.getByRole('button', { name: 'Sign out' }).filter({ visible: true }).click()
   await expect(page).toHaveURL(/\/sign-in/)
+})
+
+test.describe('Getting around', () => {
+  test('the places are grouped; on a phone they sit in a menu that closes once one is picked', async ({ page }) => {
+    await signIn(page, '024 000 0002')
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+    const nav = await openNav(page)
+    for (const group of ['Activity', 'To review', 'Promote']) await expect(nav.getByText(group, { exact: true })).toBeVisible()
+    await expect(nav.getByRole('link', { name: 'Share images' })).toBeVisible()
+
+    const menu = page.getByRole('dialog', { name: 'Menu' })
+    if (await menu.isVisible()) {
+      await page.keyboard.press('Escape')
+      await expect(menu).toBeHidden()
+      await expect(page.getByRole('button', { name: 'Menu' })).toBeFocused()
+    }
+    await goTo(page, 'People')
+    await expect(page).toHaveURL(/\/people$/)
+    await expect(menu).toBeHidden()
+  })
+})
+
+test.describe('Share images', () => {
+  test('each image is drawn from what really happened, and downloads as a PNG', async ({ page }) => {
+    await signIn(page, '024 000 0002')
+    await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible()
+    await goTo(page, 'Share images')
+    await expect(page.getByRole('heading', { name: 'Share images' })).toBeVisible()
+
+    const preview = page.getByRole('img', { name: /^Share image:/ })
+    await expect(preview).toHaveAttribute('alt', 'Share image: This week', { timeout: 15_000 })
+    await expect(page.getByText(/^This week on PlayChale: \d+ games?, \d+ players, \d+ goals/)).toBeVisible()
+
+    await page.getByRole('radio', { name: 'Milestone' }).click()
+    await expect(page.getByText(/^\d+ players on PlayChale and counting/)).toBeVisible()
+    await page.getByRole('radio', { name: 'Games coming up' }).click()
+    await expect(preview).toHaveAttribute('alt', 'Share image: Games coming up', { timeout: 15_000 })
+
+    // A played game's result, picked from the list; names can be left off.
+    await page.getByRole('radio', { name: 'Match result' }).click()
+    await expect(page.getByText(/^Full time at /)).toBeVisible({ timeout: 15_000 })
+    await page.getByLabel('Show players’ first names').uncheck()
+    await page.getByRole('radio', { name: 'Story · 9:16' }).click()
+    await expect(page).toHaveURL(/card=result&game=/)
+
+    const download = page.waitForEvent('download')
+    await page.getByRole('button', { name: 'Download image' }).click()
+    expect((await download).suggestedFilename()).toMatch(/^playchale-result-story-\d{4}-\d{2}-\d{2}\.png$/)
+  })
 })

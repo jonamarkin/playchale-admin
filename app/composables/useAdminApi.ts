@@ -1,5 +1,5 @@
 import type { FetchError } from 'ofetch'
-import type { AdminEntry, AdminEvent, AdminEventDetail, AdminFunnel, AdminGame, AdminHealth, AdminMessage, AdminPerson, AdminReported, AdminSms, AdminTrends, AdminVenue, AdminVisits, AdminWaiting, ID, SignedIn, StaffRole } from '~/types/admin'
+import type { AdminEntry, AdminEvent, AdminEventDetail, AdminFunnel, AdminGame, AdminHealth, AdminMessage, AdminPerson, AdminReported, AdminSms, AdminTrends, AdminVenue, AdminVisits, AdminWaiting, ID, ShareMilestone, ShareRecap, ShareResult, ShareUpcoming, SignedIn, StaffRole } from '~/types/admin'
 
 /**
  * The PlayChale API, as the admin desk uses it. The session is the API's own cookie, sent with
@@ -59,6 +59,13 @@ export function useAdminApi() {
       declineVenue: (venueId: ID, why: string) => call<void>(`/admin/venues/${venueId}/decline`, { method: 'POST', body: { why } }),
       /** Calls a game off on PlayChale's behalf; its host and players are told why. */
       takeDownGame: (gameId: ID, why: string) => call<void>(`/admin/games/${gameId}/take-down`, { method: 'POST', body: { why } }),
+    },
+    /** What the desk's share images are drawn from. */
+    share: {
+      game: (gameId: ID) => call<ShareResult>(`/admin/share/games/${gameId}`),
+      recap: (days = 7) => call<ShareRecap>('/admin/share/recap', { query: { days } }),
+      milestone: () => call<ShareMilestone>('/admin/share/milestone'),
+      upcoming: (days = 7) => call<ShareUpcoming[]>('/admin/share/upcoming', { query: { days } }),
     },
   }
 }

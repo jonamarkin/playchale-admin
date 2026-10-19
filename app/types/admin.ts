@@ -264,3 +264,65 @@ export interface AdminReportLine {
   reporterName?: string
   at: ISODate
 }
+
+/* ---------------------------------------------------------------- */
+/* Share images: what they're drawn from (first names only)          */
+/* ---------------------------------------------------------------- */
+
+export interface SharePlayer {
+  name: string
+  goals: number
+  assists: number
+  points: number
+}
+
+/** One side of a result: "Kojo’s side" or a team's name, its score, and who played. */
+export interface ShareSide {
+  label: string
+  score: number
+  players: SharePlayer[]
+}
+
+export interface ShareResult {
+  id: ID
+  title: string
+  sport: string
+  startsAt: ISODate
+  timezone: string
+  venueName: string
+  venueArea?: string | null
+  home: ShareSide
+  away: ShareSide
+  /** Set by set, for sports played in sets. */
+  sets: { home: number, away: number }[]
+}
+
+export interface ShareRecap {
+  from: ISODate
+  to: ISODate
+  games: number
+  players: number
+  goals: number
+  /** Latest first. */
+  results: ShareResult[]
+  topScorers: { name: string, goals: number }[]
+}
+
+export interface ShareMilestone {
+  members: number
+  gamesPlayed: number
+  gamesPutOn: number
+  sports: number
+}
+
+export interface ShareUpcoming {
+  id: ID
+  title: string
+  sport: string
+  startsAt: ISODate
+  timezone: string
+  venueName: string
+  venueArea?: string | null
+  /** Absent for a game with no limit. */
+  spotsLeft?: number | null
+}

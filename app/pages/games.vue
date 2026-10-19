@@ -127,6 +127,9 @@ const confirmTakeDown = async () => {
             <p class="font-medium tabular-nums">{{ g.players }}{{ g.capacity ? ` / ${g.capacity}` : '' }} in</p>
             <p class="text-mute tabular-nums">{{ g.messages }} {{ g.messages === 1 ? 'message' : 'messages' }}</p>
           </div>
+          <BaseButton v-if="g.status === 'completed'" variant="secondary" size="sm" :to="`/share?card=result&game=${g.id}`">
+            <Icon name="ph:image-square" class="size-4" /> Share image
+          </BaseButton>
           <BaseButton v-if="canTakeDown(g) && removing?.id !== g.id" variant="danger" size="sm" @click="startTakingDown(g)">
             <Icon name="ph:prohibit" class="size-4" /> Take down
           </BaseButton>

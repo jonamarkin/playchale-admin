@@ -51,3 +51,17 @@ export async function asPlayer(request: APIRequestContext, phone: string) {
   const signedIn = await request.post(`${API}/auth/sessions`, { data: { phone, code: '123456' } })
   expect(signedIn.ok(), `signing in as ${phone}`).toBeTruthy()
 }
+
+/** The desk's places: the sidebar on a laptop; on a phone, in the menu, which is opened first. */
+export async function openNav(page: Page) {
+  const menu = page.getByRole('button', { name: 'Menu' })
+  // Whichever this width has, once the desk has drawn it.
+  await menu.or(page.getByRole('navigation', { name: 'Admin' })).first().waitFor()
+  if (await menu.isVisible()) await menu.click()
+  return page.getByRole('navigation', { name: 'Admin' }).filter({ visible: true })
+}
+
+/** Goes to one of the desk's places by its name. */
+export async function goTo(page: Page, name: string | RegExp) {
+  await (await openNav(page)).getByRole('link', { name }).click()
+}
