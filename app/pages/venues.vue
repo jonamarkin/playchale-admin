@@ -39,7 +39,7 @@ const { data: venues, status, error, refresh } = await useAsyncData<AdminVenue[]
 const waitingCounts = useState<AdminWaiting | null>('admin:waiting')
 
 const money = (minor: number, currency: string) =>
-  new Intl.NumberFormat('en-GH', { style: 'currency', currency, maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100)
+  new Intl.NumberFormat('en-GH', { style: 'currency', currency, currencyDisplay: 'code', maximumFractionDigits: minor % 100 === 0 ? 0 : 2 }).format(minor / 100)
 const mapLink = (v: AdminVenue) =>
   v.latitude != null && v.longitude != null ? `https://www.google.com/maps/search/?api=1&query=${v.latitude},${v.longitude}` : v.mapUrl
 const amenityNames: Record<string, string> = {
